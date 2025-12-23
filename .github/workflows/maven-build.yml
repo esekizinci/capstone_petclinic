@@ -80,12 +80,16 @@ jobs:
 
       - name: Update K3s Manifest
         run: |
-          # MANIFEST GÜNCELLEME: Senin çalışan formülün
-          sed -i "s|image: ghcr.io/esekizinci/${{ matrix.service }}:.*|image: ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}|g" manifests/${{ matrix.service }}.yaml
-
-      - name: Commit manifest change
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add manifests/*.yaml
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Deploy ${{ matrix.service }} image ${{ env.IMAGE_TAG }}" && git push)
+          echo "Listing manifests directory to find the right file..."
+          ls -R manifests/
+          
+          # Matrix'ten gelen servis ismini içeren dosyayı bul (örn: *admin-server*.yaml)
+          TARGET_FILE=$(find manifests/ -name "*${{ matrix.service }}*.y*ml" | head -n 1)
+          
+          if [ -z "$TARGET_FILE" ]; then
+            echo "❌ ERROR: Manifest file for ${{ matrix.service }} not found!"
+            exit 1
+          fi
+          
+          echo "✅ Found file: $TARGET_FILE. Updating image tag..."
+          sed -i "s|image: ghcr.io/esekizinci/${{ matrix.service }}:.*|image: ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}|g" "$TARGET_FILE"
