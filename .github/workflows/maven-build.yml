@@ -80,16 +80,20 @@ jobs:
 
       - name: Update K3s Manifest
         run: |
-          echo "Listing manifests directory to find the right file..."
-          ls -R manifests/
+          # spring-petclinic-config-server -> config-server dönüşümü yapıyoruz
+          SHORT_NAME=$(echo "${{ matrix.service }}" | sed 's/spring-petclinic-//')
           
-          # Matrix'ten gelen servis ismini içeren dosyayı bul (örn: *admin-server*.yaml)
-          TARGET_FILE=$(find manifests/ -name "*${{ matrix.service }}*.y*ml" | head -n 1)
+          # Kısa isme göre dosyayı bul (örn: config-server.yaml)
+          TARGET_FILE="manifests/${SHORT_NAME}.yaml"
           
-          if [ -z "$TARGET_FILE" ]; then
-            echo "❌ ERROR: Manifest file for ${{ matrix.service }} not found!"
+          echo "Matrix Service: ${{ matrix.service }}"
+          echo "Looking for file: $TARGET_FILE"
+          
+          if [ -f "$TARGET_FILE" ]; then
+            echo "✅ Found! Updating image tag..."
+            sed -i "s|image: ghcr.io/esekizinci/${{ matrix.service }}:.*|image: ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}|g" "$TARGET_FILE"
+          else
+            echo "❌ ERROR: $TARGET_FILE not found in manifests/ directory!"
+            ls manifests/
             exit 1
           fi
-          
-          echo "✅ Found file: $TARGET_FILE. Updating image tag..."
-          sed -i "s|image: ghcr.io/esekizinci/${{ matrix.service }}:.*|image: ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}|g" "$TARGET_FILE"
