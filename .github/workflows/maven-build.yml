@@ -1,108 +1,3 @@
-# # # This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# # # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-# # name: Java CI with Maven
-
-# # on:
-# #   push:
-# #     branches: [ main ]
-# #   pull_request:
-# #     branches: [ main ]
-
-# # jobs:
-# #   build:
-
-# #     runs-on: ubuntu-latest
-# #     strategy:
-# #       matrix:
-# #         java: [ '17' ]
-
-# #     steps:
-# #     - uses: actions/checkout@v4
-# #     - name: Set up JDK ${{matrix.java}}
-# #       uses: actions/setup-java@v4
-# #       with:
-# #         java-version: ${{matrix.java}}
-# #         distribution: 'adopt'
-# #         cache: maven
-# #     - name: Build with Maven
-# #       run: mvn -B package --file pom.xml
-
-# name: Java CI/CD - Test and Multi-Arch Push
-
-# on:
-#   push:
-#     branches: [ main ]
-
-# jobs:
-#   # 1. AŞAMA: Standart İşlemcide Test
-#   test-and-verify:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v4
-
-#       - name: Set up JDK 17
-#         uses: actions/setup-java@v4
-#         with:
-#           java-version: '17'
-#           distribution: 'adopt'
-#           cache: maven
-
-#       - name: Run Tests (Default Architecture)
-#         run: mvn clean test # Burada testler koşar, başarısız olursa pipeline durur.
-
-#       - name: Build JAR (Default Architecture)
-#         run: mvn -B package -DskipTests
-
-#   # 2. AŞAMA: ARM Build ve Push (Sadece testler geçerse başlar)
-#   build-arm-and-push:
-#     needs: test-and-verify # Bu satır, testlerin bitmesini bekler.
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
-#       packages: write
-
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v4
-
-#       # GHCR'a login oluyoruz (Dediğin gibi, her iş temiz bir oturumla başlar)
-#       - name: Login to GitHub Container Registry
-#         uses: docker/login-action@v3
-#         with:
-#           registry: ghcr.io
-#           username: ${{ github.actor }}
-#           password: ${{ secrets.GITHUB_TOKEN }}
-
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v3
-
-#       # Test etmeden direkt ARM64 ve AMD64 olarak paketleyip GHCR'a gönderir
-#       # - name: Build and Push ARM-Based Image
-#       #   uses: docker/build-push-action@v5
-#       #   with:
-#       #     context: .
-#       #     file: ./docker/Dockerfile
-#       #     platforms: linux/arm64,linux/amd64
-#       #     push: true
-#       #     tags: |
-#       #       ghcr.io/${{ github.repository_owner }}/petclinic:latest
-#       #       ghcr.io/${{ github.repository_owner }}/petclinic:${{ github.sha }}
-#       - name: Build and Push ARM-Based Image
-#         uses: docker/build-push-action@v5
-#         with:
-#           context: .
-#           file: ./docker/Dockerfile
-#           platforms: linux/arm64,linux/amd64
-#           push: true
-#           # Burası çok kritik: Docker'a Maven'ın ürettiği JAR dosyasını tanıtıyoruz
-#           build-args: |
-#             ARTIFACT_NAME=target/*.jar
-#           tags: |
-#             ghcr.io/${{ github.repository_owner }}/petclinic:latest
-#             ghcr.io/${{ github.repository_owner }}/petclinic:${{ github.sha }}
-
 name: Java CI/CD - Test and Multi-Arch Push
 
 on:
@@ -126,12 +21,13 @@ jobs:
       - name: Build with Maven
         run: mvn -B package -DskipTests
 
-      # KRİTİK ADIM: Derlenen dosyayı sakla
+      # Daha garantici upload
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: petclinic-jar
-          path: target/*.jar
+          path: target/spring-petclinic-*.jar # Versiyon fark etmeksizin ana jar'ı al
+          if-no-files-found: error # Dosya yoksa burada hata ver ki ikinci aşamaya geçmeyelim
 
   build-arm-and-push:
     needs: test-and-verify
@@ -144,7 +40,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # KRİTİK ADIM: Saklanan dosyayı bu yeni makineye indir
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
@@ -168,6 +63,7 @@ jobs:
           file: ./docker/Dockerfile
           platforms: linux/arm64,linux/amd64
           push: true
+          # Dockerfile içindeki COPY komutu için dosya ismini buluyoruz
           build-args: |
             ARTIFACT_NAME=target/spring-petclinic-3.2.0-SNAPSHOT
           tags: |
