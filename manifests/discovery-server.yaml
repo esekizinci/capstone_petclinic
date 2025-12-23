@@ -14,7 +14,9 @@ spec:
     spec:
       containers:
       - name: discovery-server
-        image: ghcr.io/esekizinci/petclinic-discovery-server:latest # Bunu build edeceğiz
+        image: ghcr.io/esekizinci/spring-petclinic-discovery-server:latest
+        ports:
+        - containerPort: 8761
         resources:
           limits:
             memory: "256Mi"
@@ -28,3 +30,4 @@ spec:
     app: discovery-server
   ports:
     - port: 8761
+      targetPort: 8761

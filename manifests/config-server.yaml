@@ -14,7 +14,9 @@ spec:
     spec:
       containers:
       - name: config-server
-        image: ghcr.io/esekizinci/petclinic-config-server:latest # Bunu build edeceğiz
+        image: ghcr.io/esekizinci/spring-petclinic-config-server:latest
+        ports:
+        - containerPort: 8888
         resources:
           limits:
             memory: "256Mi"
@@ -28,3 +30,4 @@ spec:
     app: config-server
   ports:
     - port: 8888
+      targetPort: 8888
