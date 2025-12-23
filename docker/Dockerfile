@@ -1,7 +1,6 @@
 FROM eclipse-temurin:17-jdk AS builder
 WORKDIR application
 ARG ARTIFACT_NAME
-# Sadece tek bir dosya kopyalayacak, yolu workflow'dan tam alacak
 COPY ${ARTIFACT_NAME} application.jar
 RUN java -Djarmode=layertools -jar application.jar extract
 
