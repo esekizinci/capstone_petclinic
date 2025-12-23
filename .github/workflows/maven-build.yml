@@ -58,6 +58,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # - name: Build and Push
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: ./docker/Dockerfile
+      #     platforms: linux/arm64
+      #     push: true
+      #     build-args: |
+      #       # Download-artifact klasör yapısını 'jars/servis-adi/target/dosya.jar' yapar
+      #       ARTIFACT_NAME=jars/${{ matrix.service }}/target/${{ matrix.service }}-3.4.1
+      #     tags: |
+      #       ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+      #       ghcr.io/esekizinci/${{ matrix.service }}:latest
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
@@ -66,12 +79,11 @@ jobs:
           platforms: linux/arm64
           push: true
           build-args: |
-            # Download-artifact klasör yapısını 'jars/servis-adi/target/dosya.jar' yapar
-            ARTIFACT_NAME=jars/${{ matrix.service }}/target/${{ matrix.service }}-3.4.1
+            # Burada 'find' kullanarak jar'ın tam yolunu otomatik buluyoruz
+            ARTIFACT_NAME=${{ matrix.service }}-3.4.1.jar
           tags: |
             ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}
-            ghcr.io/esekizinci/${{ matrix.service }}:latest
-
+            
       # Senin istediğin otomatik manifest güncelleme adımı
       - name: Update K3s Manifest
         run: |
