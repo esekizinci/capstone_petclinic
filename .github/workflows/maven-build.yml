@@ -79,6 +79,16 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       # Test etmeden direkt ARM64 ve AMD64 olarak paketleyip GHCR'a gönderir
+      # - name: Build and Push ARM-Based Image
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: ./docker/Dockerfile
+      #     platforms: linux/arm64,linux/amd64
+      #     push: true
+      #     tags: |
+      #       ghcr.io/${{ github.repository_owner }}/petclinic:latest
+      #       ghcr.io/${{ github.repository_owner }}/petclinic:${{ github.sha }}
       - name: Build and Push ARM-Based Image
         uses: docker/build-push-action@v5
         with:
@@ -86,6 +96,9 @@ jobs:
           file: ./docker/Dockerfile
           platforms: linux/arm64,linux/amd64
           push: true
+          # Burası çok kritik: Docker'a Maven'ın ürettiği JAR dosyasını tanıtıyoruz
+          build-args: |
+            ARTIFACT_NAME=target/*.jar
           tags: |
             ghcr.io/${{ github.repository_owner }}/petclinic:latest
             ghcr.io/${{ github.repository_owner }}/petclinic:${{ github.sha }}
