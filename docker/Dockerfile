@@ -1,14 +1,10 @@
-# 1. Aşama: Builder
 FROM eclipse-temurin:17-jdk AS builder
 WORKDIR application
 ARG ARTIFACT_NAME
-
-# Alt klasörlerdeki JAR'ı bulup application.jar olarak kopyalar
-COPY **/target/${ARTIFACT_NAME} application.jar || COPY **/${ARTIFACT_NAME} application.jar
-
+# Sadece tek bir dosya kopyalayacak, yolu workflow'dan tam alacak
+COPY ${ARTIFACT_NAME} application.jar
 RUN java -Djarmode=layertools -jar application.jar extract
 
-# 2. Aşama: Runner (Diğer kısımlar aynı)
 FROM eclipse-temurin:17-jre
 WORKDIR application
 COPY --from=builder application/dependencies/ ./

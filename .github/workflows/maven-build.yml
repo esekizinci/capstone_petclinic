@@ -48,6 +48,11 @@ jobs:
           name: all-petclinic-jars
           path: jars # Tüm jar'ları 'jars' klasörüne indir
 
+      - name: Debug - List Files
+        run: |
+          echo "Listing all files in workspace:"
+          find . -name "*.jar"
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -79,12 +84,11 @@ jobs:
           platforms: linux/arm64
           push: true
           build-args: |
-            # Burada 'find' kullanarak jar'ın tam yolunu otomatik buluyoruz
-            ARTIFACT_NAME=${{ matrix.service }}-3.4.1.jar
+            # Dikkat: Maven build kök dizinde yapıldığı için klasör yapısı korunur
+            ARTIFACT_NAME=${{ matrix.service }}/target/${{ matrix.service }}-3.4.1.jar
           tags: |
             ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}
             
-      # Senin istediğin otomatik manifest güncelleme adımı
       - name: Update K3s Manifest
         run: |
           sed -i "s|image: ghcr.io/esekizinci/${{ matrix.service }}:.*|image: ghcr.io/esekizinci/${{ matrix.service }}:${{ env.IMAGE_TAG }}|g" manifests/${{ matrix.service }}.yaml
